@@ -1,30 +1,1023 @@
-import React,{lazy,Suspense,useEffect,useState} from 'react';
-import{createRoot}from'react-dom/client';
-import{Atom,BookOpen,FlaskConical,Gamepad2,ChartNoAxesCombined,ArrowLeft,Orbit,Sparkles,ChevronLeft,Check,Menu,Pause,Play,Volume2,Printer,Globe,GraduationCap}from'lucide-react';
-import{lessons,questions}from'./data';
-import Assessment from './Assessment';
-import Games from './Games';
-import Experiments from './Experiments';
-import './style.css';
-const MoleculeLab=lazy(()=>import('./MoleculeLab'));
-type Result={kind:string;score:number;total:number;weakLessons:number[];date:string};
-type Progress={name:string;completed:number[];experiments:number[];badges:string[];points:number;results:Result[];level:string;motion:boolean;font:boolean;contrast:boolean};
-const initial:Progress={name:'',completed:[],experiments:[],badges:[],points:0,results:[],level:'medium',motion:!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,font:false,contrast:false};
-function load(){try{const p=JSON.parse(localStorage.getItem('ocu-progress-v1')||'null');return p&&typeof p.name==='string'&&Array.isArray(p.completed)&&Array.isArray(p.results)?{...initial,...p}:initial}catch{return initial}}
-const nav=[['home','الرئيسية',Orbit],['lessons','رحلتك التعليمية',BookOpen],['lab','المختبر الافتراضي',FlaskConical],['builder','بناء الجزيئات',Atom],['games','الألعاب والتحديات',Gamepad2],['assessment','اختبر معرفتك',GraduationCap],['life','الكيمياء حولنا',Globe],['progress','إنجازاتي',ChartNoAxesCombined]]as const;
-function HeroMolecule(){const atoms=[{x:180,y:140,r:36,c:'carbon'},{x:282,y:195,r:36,c:'carbon'},{x:386,y:136,r:34,c:'carbon'},{x:479,y:192,r:30,c:'oxygen'},{x:99,y:197,r:22,c:'hydrogen'},{x:181,y:49,r:22,c:'hydrogen'},{x:281,y:286,r:23,c:'hydrogen'},{x:385,y:43,r:21,c:'hydrogen'},{x:478,y:281,r:21,c:'hydrogen'}];return <svg className="hero-molecule" viewBox="0 0 600 380" role="img" aria-label="رسم فني تقريبي لجزيء عضوي"><defs><radialGradient id="carbon" cx="30%" cy="25%"><stop stopColor="#b19dff"/><stop offset=".45" stopColor="#7551db"/><stop offset="1" stopColor="#211049"/></radialGradient><radialGradient id="hydrogen" cx="30%" cy="25%"><stop stopColor="white"/><stop offset=".5" stopColor="#c2d9f3"/><stop offset="1" stopColor="#485a7b"/></radialGradient><radialGradient id="oxygen" cx="30%" cy="25%"><stop stopColor="#ffb1cb"/><stop offset=".5" stopColor="#e95189"/><stop offset="1" stopColor="#641943"/></radialGradient><linearGradient id="bond"><stop stopColor="#b1a3e9"/><stop offset="1" stopColor="#45577a"/></linearGradient></defs><g stroke="url(#bond)" strokeWidth="13" strokeLinecap="round">{[[0,1],[1,2],[2,3],[0,4],[0,5],[1,6],[2,7],[3,8]].map(([a,b])=><line key={a+'-'+b} x1={atoms[a].x} y1={atoms[a].y} x2={atoms[b].x} y2={atoms[b].y}/>)}</g>{atoms.map((a,i)=><circle key={i} cx={a.x} cy={a.y} r={a.r} fill={`url(#${a.c})`}/>)}<text x="284" y="354" fill="#7f8db0" textAnchor="middle" fontSize="12" letterSpacing="5">EXPLORE · BUILD · DISCOVER</text></svg>}
-export function App(){const[p,setP]=useState<Progress>(load);const[page,setPage]=useState(location.hash.slice(1)||'home');const[lesson,setLesson]=useState<number|null>(null);const[step,setStep]=useState(0);const[welcome,setWelcome]=useState(false);const[name,setName]=useState(p.name);const[menu,setMenu]=useState(false);const[saveError,setSaveError]=useState(false);const[starter,setStarter]=useState<number|null>(null);
-useEffect(()=>{try{localStorage.setItem('ocu-progress-v1',JSON.stringify(p));setSaveError(false)}catch{setSaveError(true)}},[p]);useEffect(()=>{const f=()=>{setPage(location.hash.slice(1)||'home');setMenu(false)};addEventListener('hashchange',f);return()=>removeEventListener('hashchange',f)},[]);
-const go=(s:string)=>{location.hash=s;setPage(s);setMenu(false);window.scrollTo({top:0,behavior:'instant'})};const update=(x:Partial<Progress>)=>setP(v=>({...v,...x}));const begin=()=>{if(!p.name)setWelcome(true);else go('lessons')};const record=(r:Result)=>setP(v=>({...v,results:[...v.results,r]}));const done=(id:number)=>setP(v=>({...v,completed:[...new Set([...v.completed,id])]}));const active=lessons.find(l=>l.id===lesson);const warmup=questions.find(q=>q.lesson===lesson&&q.dok===1);const percent=Math.round((p.completed.length+p.experiments.length)/(8+5)*100);
-return <div className={`${!p.motion?'still ':''}${p.font?'large ':''}${p.contrast?'contrast':''}`}><aside className={menu?'sidebar open':'sidebar'}><a href="#home" className="brand"><span className="brand-symbol"><Atom size={28}/></span><span>عالم الكيمياء العضوية<small>ORGANIC CHEMISTRY UNIVERSE</small></span></a><div className="nav-label">مساحتك العلمية</div><nav>{nav.map(([id,title,Icon])=><a key={id} className={page===id?'active':''} href={'#'+id}><Icon size={19}/><span>{title}</span>{page===id&&<i/>}</a>)}</nav><div className="sidebar-bottom"><div className="student-avatar">{p.name?p.name[0]:<GraduationCap size={23}/>}</div><strong>{p.name||'أهلاً بالمستكشف الصغير'}<small>{p.name?'مستكشف عالم الكربون':'رحلتك العظيمة تبدأ بخطوة'}</small></strong><button aria-label="تغيير اسم الطالب" onClick={()=>{setName(p.name);setWelcome(true)}}>✎</button></div></aside><main><header><button className="mobile-menu icon-button" onClick={()=>setMenu(!menu)} aria-label="فتح القائمة"><Menu/></button><div className="breadcrumb">عالم الكيمياء العضوية <ChevronLeft size={13}/><span>{nav.find(n=>n[0]===page)?.[1]||'الرئيسية'}</span></div><div className="tools"><button title="تكبير الخط" aria-pressed={p.font} onClick={()=>update({font:!p.font})}>ع+</button><button title="تحسين التباين" aria-pressed={p.contrast} onClick={()=>update({contrast:!p.contrast})}>◐</button><button title={p.motion?'إيقاف الحركة':'تشغيل الحركة'} aria-label={p.motion?'إيقاف الحركة':'تشغيل الحركة'} onClick={()=>update({motion:!p.motion})}>{p.motion?<Pause size={16}/>:<Play size={16}/>}</button><span className="online-dot"/> <small>نتعلم. نكتشف. نبتكر.</small></div></header><div className="content">{saveError&&<p role="alert">تعذر الحفظ المحلي. قد يكون التخزين ممتلئاً؛ أبقِ هذه الصفحة مفتوحة واطبع تقريرك.</p>}
-{page==='home'&&<><section className="hero"><div className="hero-copy"><span className="eyebrow"><span/> اكتشف العلم بطريقة مختلفة</span><h1>مرحباً بك في<br/>عالم <em>الكيمياء العضوية</em></h1><p>رحلة تفاعلية لاكتشاف عالم الكربون والمركبات العضوية</p><div className="teacher"><GraduationCap size={17}/> إعداد المعلم: <strong>عمر فرج الله</strong></div><div className="hero-actions"><button className="primary" onClick={begin}>ابدأ رحلتك العلمية <ArrowLeft size={18}/></button><button className="secondary" onClick={()=>go('lab')}><FlaskConical size={18}/> ادخل المختبر الافتراضي</button></div><div className="hero-foot"><span><Check size={14}/> تعلم تفاعلي</span><span><Check size={14}/> اكتشاف بلا حدود</span><span><Check size={14}/> تقدم محفوظ</span></div></div><div className="molecule-scene"><div className="orbit orbit-one"/><div className="orbit orbit-two"/><div className="floating-label label-one"><i/> عالم يبدأ بذرة كربون <small>THE ELEMENT OF LIFE</small></div><HeroMolecule/><div className="floating-label label-two"><Atom size={19}/><span>روابط صغيرة.<br/><b>احتمالات لا نهائية.</b></span></div><span className="scene-coordinate">06 / C — CARBON</span></div></section><section className="stats-strip">{[['08','دروس تفاعلية',BookOpen],['05','تجارب افتراضية',FlaskConical],['06','ألعاب تعليمية',Gamepad2],['80','سؤالاً وتحدياً',GraduationCap]].map(([n,t,I])=>{const Icon=I as typeof Atom;return <div key={String(t)}><Icon size={24}/><strong>{String(n)}</strong><span>{String(t)}</span></div>})}</section><div className="section-heading"><div><span className="eyebrow">خطوتك الأولى نحو الاكتشاف</span><h2>اختر مسارك في عالم الكيمياء</h2></div><span className="muted">كل تجربة… بداية لفكرة جديدة</span></div><div className="path-grid">{[{id:'lessons',icon:BookOpen,title:'رحلتك التعليمية',text:'ثمانية دروس تأخذك من أساسيات الكربون إلى أسرار التفاعلات.',tag:'تعلم خطوة بخطوة',color:'purple'},{id:'builder',icon:Atom,title:'مختبر بناء الجزيئات',text:'ابنِ جزيئك، استكشف روابطه وشاهد الكيمياء من كل زاوية.',tag:'اكتشف بالأبعاد الثلاثة',color:'blue'},{id:'games',icon:Gamepad2,title:'تعلّم. العب. تحدَّ نفسك.',text:'حوّل معرفتك إلى إنجازات مع ألعاب وتحديات علمية ممتعة.',tag:'المعرفة تبدأ بالفضول',color:'pink'}].map(c=><button className={'path-card '+c.color} key={c.id} onClick={()=>go(c.id)}><span className="path-icon"><c.icon size={26}/></span><span className="path-tag">{c.tag}</span><h3>{c.title}</h3><p>{c.text}</p><span className="card-link">استكشف الآن <ArrowLeft size={17}/></span><div className="card-decoration">{c.id==='builder'?'C₂H₆':c.id==='games'?'✧':'⌬'}</div></button>)}</div><section className="bottom-banner"><span className="banner-icon"><Sparkles/></span><div><h3>لكل مستكشف… رحلة تناسبه</h3><p>اختر مستواك، تعلّم بالسرعة التي تناسبك، وشاهد تقدمك ينمو.</p></div><button className="secondary" onClick={()=>go('progress')}>تابع إنجازاتك <ArrowLeft size={17}/></button></section></>}
-{page!=='home'&&<div className="page-heading"><span className="eyebrow">ORGANIC CHEMISTRY UNIVERSE</span><h1>{nav.find(n=>n[0]===page)?.[1]}</h1><p>اكتشف، جرّب، ثم اختبر فهمك. تقدمك يُحفظ على هذا الجهاز.</p></div>}
-{page==='lessons'&&<><div className="level-control"><label>مسارك التعليمي <select value={p.level} onChange={e=>update({level:e.target.value})}><option value="beginner">مبتدئ / SEN — خطوة بخطوة</option><option value="medium">متوسط — شرح وتطبيق</option><option value="advanced">متقدم — تحليل وتبرير</option></select></label></div>{!active?<div className="lesson-grid">{lessons.map((l,i)=><button className="card lesson-card" key={l.id} onClick={()=>{setLesson(l.id);setStep(0);setStarter(null)}}><span className="lesson-number">{String(i+1).padStart(2,'0')}</span><BookOpen/><h3>{l.title}</h3><p>{l.subtitle}</p><span className="card-link">{p.completed.includes(l.id)?'✓ مكتمل — راجع الدرس':'ابدأ الاكتشاف'}<ArrowLeft size={16}/></span></button>)}</div>:<article className="card reading"><button onClick={()=>setLesson(null)}>→ جميع الدروس</button><h2>{active.title}</h2><div className="steps">{['أهداف التعلم','اكتشف','تعلّم','جرّب','تحدَّ نفسك'].map((s,i)=><button className={step===i?'selected':''} key={s} onClick={()=>setStep(i)}>{i+1}. {s}</button>)}</div>{step===0&&<><h3>ماذا ستتعلم؟</h3><ul>{active.objectives.map(s=><li key={s}>{s}</li>)}</ul><p>{active.intro}</p></>}{step===1&&<><h3>توقع قبل أن تقرأ</h3><p>{warmup?.prompt}</p><div className="options">{warmup?.options.map((s,i)=><button key={s} onClick={()=>setStarter(i)}>{s}</button>)}</div>{starter!==null&&<p className="feedback">{starter===warmup?.answer?'أحسنت. ':'لنتعلم معاً. '}{warmup?.explanation}</p>}</>}{step===2&&<>{p.level==='beginner'?<><p className="simple-text">{active.beginner}</p><div className="formula">{active.formula}</div><p>١. لاحظ الصيغة. ٢. حدد نوع الرابطة أو المجموعة. ٣. انتقل إلى التجربة.</p><details><summary>اقرأ شرحاً إضافياً عندما تكون مستعداً</summary>{active.sections.map(s=><section key={s.title}><h3>{s.title}</h3><p>{s.text}</p></section>)}</details></>:active.sections.map(s=><section key={s.title}><h3>{s.title}</h3><p>{s.text}</p></section>)}<div className="formula">{active.formula}</div><p className="feedback">من حياتنا: {active.life}</p>{p.level==='advanced'&&<section><h3>فكّر بعمق</h3><p>{active.advanced}</p></section>}</>}{step===3&&<><h3>استكشف الفكرة بالتجربة</h3><p>انتقل إلى المحاكاة، غيّر متغيراً واحداً، دوّن توقعك، ثم قارن تفسيرك بالنتيجة التعليمية المعروضة.</p><button className="primary" onClick={()=>go(active.id<=2?'builder':'lab')}>افتح المختبر <FlaskConical size={17}/></button><p>بعد التجربة، عُد إلى هذا الدرس لإكمال التحدي.</p></>}{step===4&&<Assessment key={active.id} level={p.level} lessonId={active.id} kind="تقييم الدرس" onResult={r=>{record(r);if(r.score/r.total>=.7)done(active.id)}}/>}<div className="reading-footer">{step<4&&<button className="primary" onClick={()=>setStep(step+1)}>الخطوة التالية <ArrowLeft size={17}/></button>}<small>يُعتمد الدرس عند تحقيق 70% في تحديه.</small></div></article>}</>}
-{page==='builder'&&<Suspense fallback={<div className="card">جارٍ تجهيز النماذج الجزيئية…</div>}><MoleculeLab allowMotion={p.motion}/></Suspense>}
-{page==='lab'&&<Experiments student={p.name||'مستكشف'} onComplete={id=>setP(v=>({...v,experiments:[...new Set([...v.experiments,id])]}))}/>}
-{page==='games'&&<Games onEarn={(badge,points)=>setP(v=>({...v,badges:[...new Set([...v.badges,badge])],points:v.points+points}))}/>}
-{page==='assessment'&&<Assessment level={p.level} onResult={record}/>}
-{page==='life'&&<><div className="lesson-grid">{[['💊','الأدوية','تحدد المجموعات الوظيفية والشكل الجزيئي ارتباط الدواء بأهدافه الحيوية. يحتوي الباراسيتامول على مجموعتي الفينول والأميد.'],['♻','البلاستيك والبوليمرات','تتحد جزيئات الإيثين الصغيرة لتكوين بولي إيثيلين طويل السلسلة. يؤثر طول السلسلة وتفرعها في خواص البلاستيك.'],['⛽','الوقود','يوفر احتراق الهيدروكربونات طاقة، ويُنتج CO₂ وماء عند اكتماله. ينتج الاحتراق غير الكامل أول أكسيد الكربون أو السناج.'],['🌸','العطور','تسهم إسترات كثيرة في الروائح الفاكهية، لكن الرائحة خاصية للمركب الكامل ولا تكفي وحدها لتحديد هويته.'],['🍋','الصناعات الغذائية','حمض الستريك وحمض الإيثانويك مركبات عضوية ترتبط بالحموضة. تخضع إضافات الغذاء لضوابط وتركيزات محددة.'],['🧴','مستحضرات التجميل','تعمل الجزيئات ذات الجزء المحب للماء والجزء المحب للدهن كمواد فعالة سطحياً، فتساعد على استحلاب الزيوت.'],['🇦🇪','البتروكيماويات في دولة الإمارات','تحوّل صناعة البتروكيماويات المواد الهيدروكربونية إلى مواد أولية وبوليمرات. يُعد مجمع بروج في الرويس مثالاً لإنتاج البولي إيثيلين والبولي بروبيلين.']].map(([icon,title,text])=><article className="card" key={title}><span className="life-icon">{icon}</span><h3>{title}</h3><p>{text}</p></article>)}</div><div className="card"><h3>مراجع للتوسع والتحقق</h3><p><a href="https://openstax.org/details/books/organic-chemistry" target="_blank" rel="noreferrer">OpenStax Organic Chemistry</a> · <a href="https://goldbook.iupac.org/" target="_blank" rel="noreferrer">IUPAC Gold Book</a> · <a href="https://www.borouge.com/" target="_blank" rel="noreferrer">بروج</a></p><p>الرسوم الجزيئية في المنصة مولدة برمجياً؛ لا تُستخدم صور محمية أو أصول خارجية غير مرخصة.</p></div></>}
-{page==='progress'&&<div className="report"><div className="card report-head"><h2>تقرير رحلة {p.name||'المستكشف'}</h2><p>إعداد المعلم: عمر فرج الله · {new Date().toLocaleDateString('ar-AE',{timeZone:'Asia/Dubai'})}</p><button className="primary" onClick={()=>window.print()}><Printer size={17}/> طباعة التقرير / حفظ PDF</button></div><div className="progress-grid">{[[percent+'%','إنجاز الدروس والتجارب'],[p.completed.length+'/8','دروس مكتملة'],[p.experiments.length+'/5','تجارب منجزة'],[p.points,'نقاط الألعاب']].map(([n,t])=><div className="card" key={t}><strong className="big-number">{n}</strong><p>{t}</p></div>)}</div><div className="card"><h3>رحلتك التعليمية</h3><div className="progress-bar"><span style={{width:percent+'%'}}/></div>{lessons.map(l=><p key={l.id}>{p.completed.includes(l.id)?'✓':'○'} {l.title}</p>)}</div><div className="card"><h3>الشارات المكتسبة</h3>{p.badges.length?p.badges.map(b=><span className="badge" key={b}>✦ {b}</span>):<p>أكمل تحديات الألعاب لتكتسب شارتك الأولى.</p>}</div><div className="card"><h3>سجل الاختبارات والتوصيات</h3>{!p.results.length&&<p>ابدأ بالاختبار القبلي لتتعرف على نقطة انطلاقك.</p>}{p.results.map((r,i)=><article key={i} className="result-row"><strong>{r.kind}: {r.score}/{r.total} — {Math.round(r.score/r.total*100)}%</strong><small>{new Date(r.date).toLocaleDateString('ar-AE',{timeZone:'Asia/Dubai'})}</small><p>{r.weakLessons.length?'راجع: '+r.weakLessons.map(id=>lessons.find(l=>l.id===id)?.title).join('، '):'أظهرت إتقاناً للمفاهيم التي قيّمها هذا الاختبار.'}</p></article>)}</div><p className="muted">الإنجاز = الدروس المعتمدة والتجارب المكتملة ÷ 13. التوصيات قواعد محلية؛ لا يوجد اتصال بنموذج ذكاء اصطناعي خارجي.</p></div>}
-</div><footer><span><Atom size={16}/> عالم الكيمياء العضوية</span><small>إعداد المعلم: عمر فرج الله</small><small>صُممت لتوقظ فضولك العلمي ✦</small></footer></main>{welcome&&<div className="modal-backdrop"><form className="card welcome" onSubmit={e=>{e.preventDefault();if(name.trim()){update({name:name.trim()});setWelcome(false);go('lessons')}}}><span className="path-icon"><Atom/></span><h2>لكل رحلة مستكشف… ما اسمك؟</h2><p>أدخل اسمك ليظهر في إنجازاتك وتقاريرك. يبقى محفوظاً على هذا الجهاز.</p><label>اسم الطالب<input autoFocus required maxLength={60} value={name} onChange={e=>setName(e.target.value)} placeholder="اكتب اسمك هنا"/></label><button className="primary">لنبدأ الاكتشاف <ArrowLeft size={17}/></button><button type="button" onClick={()=>setWelcome(false)}>إغلاق</button></form></div>}</div>}
-if(document.getElementById('root'))createRoot(document.getElementById('root')!).render(<React.StrictMode><App/></React.StrictMode>);
+import React, { lazy, Suspense, useEffect, useState } from "react";
+import { createRoot } from "react-dom/client";
+import {
+  Atom,
+  BookOpen,
+  FlaskConical,
+  Gamepad2,
+  ChartNoAxesCombined,
+  ArrowLeft,
+  Orbit,
+  Sparkles,
+  ChevronLeft,
+  Check,
+  Menu,
+  Pause,
+  Play,
+  Volume2,
+  Printer,
+  Globe,
+  GraduationCap,
+} from "lucide-react";
+import { lessons, questions } from "./data";
+import Assessment from "./Assessment";
+import Games from "./Games";
+import LessonExplorer from "./LessonExplorer";
+import { experimentSpecs } from "./labEngine";
+import "./style.css";
+const AdvancedLab = lazy(() => import("./AdvancedLab"));
+const HomeMolecule = lazy(() => import("./HomeMolecule"));
+const MoleculeLab = lazy(() => import("./MoleculeLab"));
+type Result = {
+  kind: string;
+  score: number;
+  total: number;
+  weakLessons: number[];
+  date: string;
+};
+type Progress = {
+  name: string;
+  completed: number[];
+  experiments: number[];
+  badges: string[];
+  points: number;
+  results: Result[];
+  level: string;
+  motion: boolean;
+  font: boolean;
+  contrast: boolean;
+  theme: "dark" | "light";
+  schemaVersion: number;
+};
+const initial: Progress = {
+  name: "",
+  completed: [],
+  experiments: [],
+  badges: [],
+  points: 0,
+  results: [],
+  level: "medium",
+  motion: !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
+  font: false,
+  contrast: false,
+  theme: "dark",
+  schemaVersion: 3,
+};
+function load(): Progress {
+  try {
+    const raw = JSON.parse(localStorage.getItem("ocu-progress-v1") || "null");
+    if (!raw || typeof raw.name !== "string") return initial;
+    const numbers = (x: unknown, max: number) =>
+      Array.isArray(x)
+        ? [
+            ...new Set(
+              x.filter(
+                (v): v is number => Number.isInteger(v) && v > 0 && v <= max,
+              ),
+            ),
+          ]
+        : [];
+    const oldLabs = numbers(raw.experiments, 8);
+    return {
+      ...initial,
+      name: raw.name.slice(0, 60),
+      completed: numbers(raw.completed, 8),
+      experiments:
+        raw.schemaVersion === 3
+          ? oldLabs
+          : oldLabs.map((v) => (v === 5 ? 6 : v)),
+      badges: Array.isArray(raw.badges)
+        ? raw.badges.filter((x: unknown) => typeof x === "string")
+        : [],
+      points:
+        typeof raw.points === "number" && Number.isFinite(raw.points)
+          ? Math.max(0, raw.points)
+          : 0,
+      results: Array.isArray(raw.results)
+        ? raw.results.filter(
+            (r: Result) =>
+              r &&
+              typeof r.kind === "string" &&
+              r.total > 0 &&
+              r.score >= 0 &&
+              r.score <= r.total &&
+              Array.isArray(r.weakLessons),
+          )
+        : [],
+      level: ["beginner", "medium", "advanced"].includes(raw.level)
+        ? raw.level
+        : "medium",
+      motion: typeof raw.motion === "boolean" ? raw.motion : initial.motion,
+      font: Boolean(raw.font),
+      contrast: Boolean(raw.contrast),
+      theme: raw.theme === "light" ? "light" : "dark",
+    };
+  } catch {
+    return initial;
+  }
+}
+function route() {
+  const value = location.hash.slice(1).split("?")[0];
+  return [
+    "home",
+    "lessons",
+    "lab",
+    "builder",
+    "games",
+    "assessment",
+    "life",
+    "progress",
+  ].includes(value)
+    ? value
+    : "home";
+}
+const nav = [
+  ["home", "الرئيسية", Orbit],
+  ["lessons", "رحلتك التعليمية", BookOpen],
+  ["lab", "المختبر الافتراضي", FlaskConical],
+  ["builder", "بناء الجزيئات", Atom],
+  ["games", "الألعاب والتحديات", Gamepad2],
+  ["assessment", "اختبر معرفتك", GraduationCap],
+  ["life", "الكيمياء حولنا", Globe],
+  ["progress", "إنجازاتي", ChartNoAxesCombined],
+] as const;
+function HeroMolecule() {
+  const atoms = [
+    { x: 180, y: 140, r: 36, c: "carbon" },
+    { x: 282, y: 195, r: 36, c: "carbon" },
+    { x: 386, y: 136, r: 34, c: "carbon" },
+    { x: 479, y: 192, r: 30, c: "oxygen" },
+    { x: 99, y: 197, r: 22, c: "hydrogen" },
+    { x: 181, y: 49, r: 22, c: "hydrogen" },
+    { x: 281, y: 286, r: 23, c: "hydrogen" },
+    { x: 385, y: 43, r: 21, c: "hydrogen" },
+    { x: 478, y: 281, r: 21, c: "hydrogen" },
+  ];
+  return (
+    <svg
+      className="hero-molecule"
+      viewBox="0 0 600 380"
+      role="img"
+      aria-label="رسم فني تقريبي لجزيء عضوي"
+    >
+      <defs>
+        <radialGradient id="carbon" cx="30%" cy="25%">
+          <stop stopColor="#b19dff" />
+          <stop offset=".45" stopColor="#7551db" />
+          <stop offset="1" stopColor="#211049" />
+        </radialGradient>
+        <radialGradient id="hydrogen" cx="30%" cy="25%">
+          <stop stopColor="white" />
+          <stop offset=".5" stopColor="#c2d9f3" />
+          <stop offset="1" stopColor="#485a7b" />
+        </radialGradient>
+        <radialGradient id="oxygen" cx="30%" cy="25%">
+          <stop stopColor="#ffb1cb" />
+          <stop offset=".5" stopColor="#e95189" />
+          <stop offset="1" stopColor="#641943" />
+        </radialGradient>
+        <linearGradient id="bond">
+          <stop stopColor="#b1a3e9" />
+          <stop offset="1" stopColor="#45577a" />
+        </linearGradient>
+      </defs>
+      <g stroke="url(#bond)" strokeWidth="13" strokeLinecap="round">
+        {[
+          [0, 1],
+          [1, 2],
+          [2, 3],
+          [0, 4],
+          [0, 5],
+          [1, 6],
+          [2, 7],
+          [3, 8],
+        ].map(([a, b]) => (
+          <line
+            key={a + "-" + b}
+            x1={atoms[a].x}
+            y1={atoms[a].y}
+            x2={atoms[b].x}
+            y2={atoms[b].y}
+          />
+        ))}
+      </g>
+      {atoms.map((a, i) => (
+        <circle key={i} cx={a.x} cy={a.y} r={a.r} fill={`url(#${a.c})`} />
+      ))}
+      <text
+        x="284"
+        y="354"
+        fill="#7f8db0"
+        textAnchor="middle"
+        fontSize="12"
+        letterSpacing="5"
+      >
+        EXPLORE · BUILD · DISCOVER
+      </text>
+    </svg>
+  );
+}
+export function App() {
+  const [p, setP] = useState<Progress>(load);
+  const [page, setPage] = useState(route);
+  const [lesson, setLesson] = useState<number | null>(null);
+  const [step, setStep] = useState(0);
+  const [welcome, setWelcome] = useState(false);
+  const [name, setName] = useState(p.name);
+  const [menu, setMenu] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+  const [starter, setStarter] = useState<number | null>(null);
+  useEffect(() => {
+    try {
+      localStorage.setItem("ocu-progress-v1", JSON.stringify(p));
+      setSaveError(false);
+    } catch {
+      setSaveError(true);
+    }
+  }, [p]);
+  useEffect(() => {
+    const f = () => {
+      setPage(route());
+      setMenu(false);
+    };
+    addEventListener("hashchange", f);
+    return () => removeEventListener("hashchange", f);
+  }, []);
+  const go = (s: string) => {
+    location.hash = s;
+    setPage(s.split("?")[0]);
+    setMenu(false);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  };
+  const update = (x: Partial<Progress>) => setP((v) => ({ ...v, ...x }));
+  const begin = () => {
+    if (!p.name) setWelcome(true);
+    else go("lessons");
+  };
+  const record = (r: Result) =>
+    setP((v) => ({ ...v, results: [...v.results, r] }));
+  const done = (id: number) =>
+    setP((v) => ({ ...v, completed: [...new Set([...v.completed, id])] }));
+  const active = lessons.find((l) => l.id === lesson);
+  const warmup = questions.find((q) => q.lesson === lesson && q.dok === 1);
+  const percent = Math.round(
+    ((p.completed.length + p.experiments.length) / 16) * 100,
+  );
+  return (
+    <div
+      className={`${!p.motion ? "still " : ""}${p.font ? "large " : ""}${p.contrast ? "contrast " : ""}${p.theme === "light" ? "day" : ""}`}
+    >
+      <aside className={menu ? "sidebar open" : "sidebar"}>
+        <a href="#home" className="brand">
+          <span className="brand-symbol">
+            <Atom size={28} />
+          </span>
+          <span>
+            عالم الكيمياء العضوية<small>ORGANIC CHEMISTRY UNIVERSE</small>
+          </span>
+        </a>
+        <div className="nav-label">مساحتك العلمية</div>
+        <nav>
+          {nav.map(([id, title, Icon]) => (
+            <a key={id} className={page === id ? "active" : ""} href={"#" + id}>
+              <Icon size={19} />
+              <span>{title}</span>
+              {page === id && <i />}
+            </a>
+          ))}
+        </nav>
+        <div className="sidebar-bottom">
+          <div className="student-avatar">
+            {p.name ? p.name[0] : <GraduationCap size={23} />}
+          </div>
+          <strong>
+            {p.name || "أهلاً بالمستكشف الصغير"}
+            <small>
+              {p.name ? "مستكشف عالم الكربون" : "رحلتك العظيمة تبدأ بخطوة"}
+            </small>
+          </strong>
+          <button
+            aria-label="تغيير اسم الطالب"
+            onClick={() => {
+              setName(p.name);
+              setWelcome(true);
+            }}
+          >
+            ✎
+          </button>
+        </div>
+      </aside>
+      <main>
+        <header>
+          <button
+            className="mobile-menu icon-button"
+            onClick={() => setMenu(!menu)}
+            aria-label="فتح القائمة"
+          >
+            <Menu />
+          </button>
+          <div className="breadcrumb">
+            عالم الكيمياء العضوية <ChevronLeft size={13} />
+            <span>{nav.find((n) => n[0] === page)?.[1] || "الرئيسية"}</span>
+          </div>
+          <div className="tools">
+            <button
+              title={p.theme === "dark" ? "الوضع النهاري" : "الوضع الليلي"}
+              aria-label={p.theme === "dark" ? "الوضع النهاري" : "الوضع الليلي"}
+              onClick={() =>
+                update({ theme: p.theme === "dark" ? "light" : "dark" })
+              }
+            >
+              {p.theme === "dark" ? "☀" : "☾"}
+            </button>
+            <button
+              title="تكبير الخط"
+              aria-pressed={p.font}
+              onClick={() => update({ font: !p.font })}
+            >
+              ع+
+            </button>
+            <button
+              title="تحسين التباين"
+              aria-pressed={p.contrast}
+              onClick={() => update({ contrast: !p.contrast })}
+            >
+              ◐
+            </button>
+            <button
+              title={p.motion ? "إيقاف الحركة" : "تشغيل الحركة"}
+              aria-label={p.motion ? "إيقاف الحركة" : "تشغيل الحركة"}
+              onClick={() => update({ motion: !p.motion })}
+            >
+              {p.motion ? <Pause size={16} /> : <Play size={16} />}
+            </button>
+            <span className="online-dot" /> <small>نتعلم. نكتشف. نبتكر.</small>
+          </div>
+        </header>
+        <div className="content">
+          {saveError && (
+            <p role="alert">
+              تعذر الحفظ المحلي. قد يكون التخزين ممتلئاً؛ أبقِ هذه الصفحة مفتوحة
+              واطبع تقريرك.
+            </p>
+          )}
+          {page === "home" && (
+            <>
+              <section className="hero">
+                <div className="hero-copy">
+                  <span className="eyebrow">
+                    <span /> ORGANIC UNIVERSE · 3.0
+                  </span>
+                  <h1>
+                    مرحباً بك في
+                    <br />
+                    عالم <em>الكيمياء العضوية</em>
+                  </h1>
+                  <p>رحلة تفاعلية لاكتشاف عالم الكربون والمركبات العضوية</p>
+                  <div className="teacher">
+                    <GraduationCap size={17} /> إعداد المعلم:{" "}
+                    <strong>عمر فرج الله</strong>
+                  </div>
+                  <div className="hero-actions">
+                    <button className="primary" onClick={begin}>
+                      ابدأ رحلتك العلمية <ArrowLeft size={18} />
+                    </button>
+                    <button className="secondary" onClick={() => go("lab")}>
+                      <FlaskConical size={18} /> ادخل المختبر الافتراضي
+                    </button>
+                  </div>
+                  <div className="hero-foot">
+                    <span>
+                      <Check size={14} /> تعلم تفاعلي
+                    </span>
+                    <span>
+                      <Check size={14} /> اكتشاف بلا حدود
+                    </span>
+                    <span>
+                      <Check size={14} /> تقدم محفوظ
+                    </span>
+                  </div>
+                </div>
+                <div className="molecule-scene">
+                  <div className="orbit orbit-one" />
+                  <div className="orbit orbit-two" />
+                  <div className="floating-label label-one">
+                    <i /> عالم يبدأ بذرة كربون{" "}
+                    <small>THE ELEMENT OF LIFE</small>
+                  </div>
+                  <div className="hero-3d">
+                    {p.motion ? (
+                      <Suspense fallback={<HeroMolecule />}>
+                        <HomeMolecule />
+                      </Suspense>
+                    ) : (
+                      <HeroMolecule />
+                    )}
+                  </div>
+                  <div className="floating-label label-two">
+                    <Atom size={19} />
+                    <span>
+                      روابط صغيرة.
+                      <br />
+                      <b>احتمالات لا نهائية.</b>
+                    </span>
+                  </div>
+                  <span className="scene-coordinate">06 / C — CARBON</span>
+                </div>
+              </section>
+              <section className="journey-strip">
+                <div>
+                  <span className="journey-mark">⌬</span>
+                  <div>
+                    <strong>
+                      {p.name
+                        ? `مرحباً ${p.name}، اكتشافك التالي ينتظرك`
+                        : "مختبر جديد. فضول لا ينتهي."}
+                    </strong>
+                    <p>
+                      ٨ تجارب · مساعد مرشد · أدوات ثلاثية الأبعاد · دفتر
+                      اكتشافاتك
+                    </p>
+                  </div>
+                </div>
+                <div className="journey-progress">
+                  <span>
+                    إنجاز رحلتك <b>{percent}%</b>
+                  </span>
+                  <div className="progress-bar">
+                    <span style={{ width: percent + "%" }} />
+                  </div>
+                </div>
+                <button onClick={() => go("lab")}>
+                  استكشف المختبر 3.0 <ArrowLeft size={15} />
+                </button>
+              </section>
+              <section className="stats-strip">
+                {[
+                  ["08", "دروس تفاعلية", BookOpen],
+                  ["08", "تجارب افتراضية", FlaskConical],
+                  ["06", "ألعاب تعليمية", Gamepad2],
+                  ["80", "سؤالاً وتحدياً", GraduationCap],
+                ].map(([n, t, I]) => {
+                  const Icon = I as typeof Atom;
+                  return (
+                    <div key={String(t)}>
+                      <Icon size={24} />
+                      <strong>{String(n)}</strong>
+                      <span>{String(t)}</span>
+                    </div>
+                  );
+                })}
+              </section>
+              <div className="section-heading">
+                <div>
+                  <span className="eyebrow">خطوتك الأولى نحو الاكتشاف</span>
+                  <h2>اختر مسارك في عالم الكيمياء</h2>
+                </div>
+                <span className="muted">كل تجربة… بداية لفكرة جديدة</span>
+              </div>
+              <div className="path-grid">
+                {[
+                  {
+                    id: "lessons",
+                    icon: BookOpen,
+                    title: "رحلتك التعليمية",
+                    text: "ثمانية دروس تأخذك من أساسيات الكربون إلى أسرار التفاعلات.",
+                    tag: "تعلم خطوة بخطوة",
+                    color: "purple",
+                  },
+                  {
+                    id: "lab",
+                    icon: FlaskConical,
+                    title: "مختبرك الافتراضي المتقدم",
+                    text: "جهّز الأدوات، غيّر المتغيرات، واكتب دليلك في دفتر المختبر.",
+                    tag: "اكتشف بالأبعاد الثلاثة",
+                    color: "blue",
+                  },
+                  {
+                    id: "games",
+                    icon: Gamepad2,
+                    title: "تعلّم. العب. تحدَّ نفسك.",
+                    text: "حوّل معرفتك إلى إنجازات مع ألعاب وتحديات علمية ممتعة.",
+                    tag: "المعرفة تبدأ بالفضول",
+                    color: "pink",
+                  },
+                ].map((c) => (
+                  <button
+                    className={"path-card " + c.color}
+                    key={c.id}
+                    onClick={() => go(c.id)}
+                  >
+                    <span className="path-icon">
+                      <c.icon size={26} />
+                    </span>
+                    <span className="path-tag">{c.tag}</span>
+                    <h3>{c.title}</h3>
+                    <p>{c.text}</p>
+                    <span className="card-link">
+                      استكشف الآن <ArrowLeft size={17} />
+                    </span>
+                    <div className="card-decoration">
+                      {c.id === "lab" ? "C₂H₆" : c.id === "games" ? "✧" : "⌬"}
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <section className="bottom-banner">
+                <span className="banner-icon">
+                  <Sparkles />
+                </span>
+                <div>
+                  <h3>لكل مستكشف… رحلة تناسبه</h3>
+                  <p>
+                    اختر مستواك، تعلّم بالسرعة التي تناسبك، وشاهد تقدمك ينمو.
+                  </p>
+                </div>
+                <button className="secondary" onClick={() => go("progress")}>
+                  تابع إنجازاتك <ArrowLeft size={17} />
+                </button>
+              </section>
+            </>
+          )}
+          {page !== "home" && (
+            <div className="page-heading">
+              <span className="eyebrow">ORGANIC CHEMISTRY UNIVERSE</span>
+              <h1>{nav.find((n) => n[0] === page)?.[1]}</h1>
+              <p>اكتشف، جرّب، ثم اختبر فهمك. تقدمك يُحفظ على هذا الجهاز.</p>
+            </div>
+          )}
+          {page === "lessons" && (
+            <>
+              <div className="level-control">
+                <label>
+                  مسارك التعليمي{" "}
+                  <select
+                    value={p.level}
+                    onChange={(e) => update({ level: e.target.value })}
+                  >
+                    <option value="beginner">مبتدئ / SEN — خطوة بخطوة</option>
+                    <option value="medium">متوسط — شرح وتطبيق</option>
+                    <option value="advanced">متقدم — تحليل وتبرير</option>
+                  </select>
+                </label>
+              </div>
+              {!active ? (
+                <div className="lesson-grid">
+                  {lessons.map((l, i) => (
+                    <button
+                      className="card lesson-card"
+                      key={l.id}
+                      onClick={() => {
+                        setLesson(l.id);
+                        setStep(0);
+                        setStarter(null);
+                      }}
+                    >
+                      <span className="lesson-number">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <BookOpen />
+                      <h3>{l.title}</h3>
+                      <p>{l.subtitle}</p>
+                      <span className="card-link">
+                        {p.completed.includes(l.id)
+                          ? "✓ مكتمل — راجع الدرس"
+                          : "ابدأ الاكتشاف"}
+                        <ArrowLeft size={16} />
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <article className="card reading">
+                  <button onClick={() => setLesson(null)}>→ جميع الدروس</button>
+                  <h2>{active.title}</h2>
+                  <div className="steps">
+                    {[
+                      "أهداف التعلم",
+                      "اكتشف",
+                      "تعلّم",
+                      "جرّب",
+                      "تحدَّ نفسك",
+                    ].map((s, i) => (
+                      <button
+                        className={step === i ? "selected" : ""}
+                        key={s}
+                        onClick={() => setStep(i)}
+                      >
+                        {i + 1}. {s}
+                      </button>
+                    ))}
+                  </div>
+                  {step === 0 && (
+                    <>
+                      <h3>ماذا ستتعلم؟</h3>
+                      <ul>
+                        {active.objectives.map((s) => (
+                          <li key={s}>{s}</li>
+                        ))}
+                      </ul>
+                      <p>{active.intro}</p>
+                    </>
+                  )}
+                  {step === 1 && (
+                    <>
+                      <h3>توقع قبل أن تقرأ</h3>
+                      <p>{warmup?.prompt}</p>
+                      <div className="options">
+                        {warmup?.options.map((s, i) => (
+                          <button key={s} onClick={() => setStarter(i)}>
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                      {starter !== null && (
+                        <p className="feedback">
+                          {starter === warmup?.answer
+                            ? "أحسنت. "
+                            : "لنتعلم معاً. "}
+                          {warmup?.explanation}
+                        </p>
+                      )}
+                    </>
+                  )}
+                  {step === 2 && (
+                    <>
+                      {p.level === "beginner" ? (
+                        <>
+                          <p className="simple-text">{active.beginner}</p>
+                          <div className="formula">{active.formula}</div>
+                          <p>
+                            ١. لاحظ الصيغة. ٢. حدد نوع الرابطة أو المجموعة. ٣.
+                            انتقل إلى التجربة.
+                          </p>
+                          <details>
+                            <summary>
+                              اقرأ شرحاً إضافياً عندما تكون مستعداً
+                            </summary>
+                            {active.sections.map((s) => (
+                              <section key={s.title}>
+                                <h3>{s.title}</h3>
+                                <p>{s.text}</p>
+                              </section>
+                            ))}
+                          </details>
+                        </>
+                      ) : (
+                        active.sections.map((s) => (
+                          <section key={s.title}>
+                            <h3>{s.title}</h3>
+                            <p>{s.text}</p>
+                          </section>
+                        ))
+                      )}
+                      <LessonExplorer
+                        key={active.id}
+                        lessonId={active.id}
+                        level={p.level}
+                      />
+                      <div className="formula">{active.formula}</div>
+                      <p className="feedback">من حياتنا: {active.life}</p>
+                      {p.level === "advanced" && (
+                        <section>
+                          <h3>فكّر بعمق</h3>
+                          <p>{active.advanced}</p>
+                        </section>
+                      )}
+                    </>
+                  )}
+                  {step === 3 && (
+                    <>
+                      <h3>استكشف الفكرة بالتجربة</h3>
+                      <p>
+                        انتقل إلى المحاكاة، غيّر متغيراً واحداً، دوّن توقعك، ثم
+                        قارن تفسيرك بالنتيجة التعليمية المعروضة.
+                      </p>
+                      <button
+                        className="primary"
+                        onClick={() =>
+                          go(
+                            "lab?experiment=" +
+                              [
+                                "functional",
+                                "combustion",
+                                "combustion",
+                                "addition",
+                                "bromine",
+                                "physical",
+                                "functional",
+                                "ester",
+                              ][active.id - 1],
+                          )
+                        }
+                      >
+                        افتح المختبر <FlaskConical size={17} />
+                      </button>
+                      <p>بعد التجربة، عُد إلى هذا الدرس لإكمال التحدي.</p>
+                    </>
+                  )}
+                  {step === 4 && (
+                    <Assessment
+                      key={active.id}
+                      level={p.level}
+                      lessonId={active.id}
+                      kind="تقييم الدرس"
+                      onResult={(r) => {
+                        record(r);
+                        if (r.score / r.total >= 0.7) done(active.id);
+                      }}
+                    />
+                  )}
+                  <div className="reading-footer">
+                    {step < 4 && (
+                      <button
+                        className="primary"
+                        onClick={() => setStep(step + 1)}
+                      >
+                        الخطوة التالية <ArrowLeft size={17} />
+                      </button>
+                    )}
+                    <small>يُعتمد الدرس عند تحقيق 70% في تحديه.</small>
+                  </div>
+                </article>
+              )}
+            </>
+          )}
+          {page === "builder" && (
+            <Suspense
+              fallback={
+                <div className="card">جارٍ تجهيز النماذج الجزيئية…</div>
+              }
+            >
+              <MoleculeLab
+                allowMotion={p.motion}
+                onChallengeComplete={() =>
+                  setP((v) => ({
+                    ...v,
+                    badges: [...new Set([...v.badges, "باني الإيثانول"])],
+                  }))
+                }
+              />
+            </Suspense>
+          )}
+          {page === "lab" && (
+            <Suspense fallback={<div className="card">جارٍ تجهيز مختبرك…</div>}>
+              <AdvancedLab
+                student={p.name || "مستكشف"}
+                reducedMotion={!p.motion}
+                level={p.level}
+                onComplete={(id) =>
+                  setP((v) => ({
+                    ...v,
+                    experiments: [...new Set([...v.experiments, id])],
+                  }))
+                }
+              />
+            </Suspense>
+          )}
+          {page === "games" && (
+            <Games
+              onEarn={(badge, points) =>
+                setP((v) => ({
+                  ...v,
+                  badges: [...new Set([...v.badges, badge])],
+                  points: v.points + points,
+                }))
+              }
+            />
+          )}
+          {page === "assessment" && (
+            <Assessment level={p.level} onResult={record} />
+          )}
+          {page === "life" && (
+            <>
+              <div className="lesson-grid">
+                {[
+                  [
+                    "💊",
+                    "الأدوية",
+                    "تحدد المجموعات الوظيفية والشكل الجزيئي ارتباط الدواء بأهدافه الحيوية. يحتوي الباراسيتامول على مجموعتي الفينول والأميد.",
+                  ],
+                  [
+                    "♻",
+                    "البلاستيك والبوليمرات",
+                    "تتحد جزيئات الإيثين الصغيرة لتكوين بولي إيثيلين طويل السلسلة. يؤثر طول السلسلة وتفرعها في خواص البلاستيك.",
+                  ],
+                  [
+                    "⛽",
+                    "الوقود",
+                    "يوفر احتراق الهيدروكربونات طاقة، ويُنتج CO₂ وماء عند اكتماله. ينتج الاحتراق غير الكامل أول أكسيد الكربون أو السناج.",
+                  ],
+                  [
+                    "🌸",
+                    "العطور",
+                    "تسهم إسترات كثيرة في الروائح الفاكهية، لكن الرائحة خاصية للمركب الكامل ولا تكفي وحدها لتحديد هويته.",
+                  ],
+                  [
+                    "🍋",
+                    "الصناعات الغذائية",
+                    "حمض الستريك وحمض الإيثانويك مركبات عضوية ترتبط بالحموضة. تخضع إضافات الغذاء لضوابط وتركيزات محددة.",
+                  ],
+                  [
+                    "🧴",
+                    "مستحضرات التجميل",
+                    "تعمل الجزيئات ذات الجزء المحب للماء والجزء المحب للدهن كمواد فعالة سطحياً، فتساعد على استحلاب الزيوت.",
+                  ],
+                  [
+                    "🇦🇪",
+                    "البتروكيماويات في دولة الإمارات",
+                    "تحوّل صناعة البتروكيماويات المواد الهيدروكربونية إلى مواد أولية وبوليمرات. يُعد مجمع بروج في الرويس مثالاً لإنتاج البولي إيثيلين والبولي بروبيلين.",
+                  ],
+                ].map(([icon, title, text]) => (
+                  <article className="card" key={title}>
+                    <span className="life-icon">{icon}</span>
+                    <h3>{title}</h3>
+                    <p>{text}</p>
+                  </article>
+                ))}
+              </div>
+              <div className="card">
+                <h3>مراجع للتوسع والتحقق</h3>
+                <p>
+                  <a
+                    href="https://openstax.org/details/books/organic-chemistry"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    OpenStax Organic Chemistry
+                  </a>{" "}
+                  ·{" "}
+                  <a
+                    href="https://goldbook.iupac.org/"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    IUPAC Gold Book
+                  </a>{" "}
+                  ·{" "}
+                  <a
+                    href="https://www.borouge.com/"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    بروج
+                  </a>
+                </p>
+                <p>
+                  الرسوم الجزيئية في المنصة مولدة برمجياً؛ لا تُستخدم صور محمية
+                  أو أصول خارجية غير مرخصة.
+                </p>
+              </div>
+            </>
+          )}
+          {page === "progress" && (
+            <div className="report">
+              <div className="card report-head">
+                <h2>تقرير رحلة {p.name || "المستكشف"}</h2>
+                <p>
+                  إعداد المعلم: عمر فرج الله ·{" "}
+                  {new Date().toLocaleDateString("ar-AE", {
+                    timeZone: "Asia/Dubai",
+                  })}
+                </p>
+                <button className="primary" onClick={() => window.print()}>
+                  <Printer size={17} /> طباعة التقرير / حفظ PDF
+                </button>
+              </div>
+              <div className="progress-grid">
+                {[
+                  [percent + "%", "إنجاز الدروس والتجارب"],
+                  [p.completed.length + "/8", "دروس مكتملة"],
+                  [p.experiments.length + "/8", "تجارب منجزة"],
+                  [p.points, "نقاط الألعاب"],
+                ].map(([n, t]) => (
+                  <div className="card" key={t}>
+                    <strong className="big-number">{n}</strong>
+                    <p>{t}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="card">
+                <h3>رحلتك التعليمية</h3>
+                <div className="progress-bar">
+                  <span style={{ width: percent + "%" }} />
+                </div>
+                {lessons.map((l) => (
+                  <p key={l.id}>
+                    {p.completed.includes(l.id) ? "✓" : "○"} {l.title}
+                  </p>
+                ))}
+              </div>
+              <div className="card">
+                <h3>سجل التجارب الثماني</h3>
+                {experimentSpecs.map((e, i) => (
+                  <p key={e.id}>
+                    {p.experiments.includes(i + 1) ? "✓" : "○"} {e.title}
+                  </p>
+                ))}
+              </div>
+              <div className="card">
+                <h3>الشارات المكتسبة</h3>
+                {p.badges.length ? (
+                  p.badges.map((b) => (
+                    <span className="badge" key={b}>
+                      ✦ {b}
+                    </span>
+                  ))
+                ) : (
+                  <p>أكمل تحديات الألعاب لتكتسب شارتك الأولى.</p>
+                )}
+              </div>
+              <div className="card">
+                <h3>سجل الاختبارات والتوصيات</h3>
+                {!p.results.length && (
+                  <p>ابدأ بالاختبار القبلي لتتعرف على نقطة انطلاقك.</p>
+                )}
+                {p.results.map((r, i) => (
+                  <article key={i} className="result-row">
+                    <strong>
+                      {r.kind}: {r.score}/{r.total} —{" "}
+                      {Math.round((r.score / r.total) * 100)}%
+                    </strong>
+                    <small>
+                      {new Date(r.date).toLocaleDateString("ar-AE", {
+                        timeZone: "Asia/Dubai",
+                      })}
+                    </small>
+                    <p>
+                      {r.weakLessons.length
+                        ? "راجع: " +
+                          r.weakLessons
+                            .map(
+                              (id) => lessons.find((l) => l.id === id)?.title,
+                            )
+                            .join("، ")
+                        : "أظهرت إتقاناً للمفاهيم التي قيّمها هذا الاختبار."}
+                    </p>
+                  </article>
+                ))}
+              </div>
+              <p className="muted">
+                الإنجاز = الدروس المعتمدة والتجارب المكتملة ÷ 16. التوصيات قواعد
+                محلية؛ لا يوجد اتصال بنموذج ذكاء اصطناعي خارجي.
+              </p>
+            </div>
+          )}
+        </div>
+        <footer>
+          <span>
+            <Atom size={16} /> عالم الكيمياء العضوية
+          </span>
+          <small>إعداد المعلم: عمر فرج الله</small>
+          <small>صُممت لتوقظ فضولك العلمي ✦</small>
+        </footer>
+      </main>
+      {welcome && (
+        <div className="modal-backdrop">
+          <form
+            className="card welcome"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (name.trim()) {
+                update({ name: name.trim() });
+                setWelcome(false);
+                if (page === "home") go("lessons");
+              }
+            }}
+          >
+            <span className="path-icon">
+              <Atom />
+            </span>
+            <h2>لكل رحلة مستكشف… ما اسمك؟</h2>
+            <p>
+              أدخل اسمك ليظهر في إنجازاتك وتقاريرك. يبقى محفوظاً على هذا الجهاز.
+            </p>
+            <label>
+              اسم الطالب
+              <input
+                autoFocus
+                required
+                maxLength={60}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="اكتب اسمك هنا"
+              />
+            </label>
+            <button className="primary">
+              لنبدأ الاكتشاف <ArrowLeft size={17} />
+            </button>
+            <button type="button" onClick={() => setWelcome(false)}>
+              إغلاق
+            </button>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+if (document.getElementById("root"))
+  createRoot(document.getElementById("root")!).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+  );

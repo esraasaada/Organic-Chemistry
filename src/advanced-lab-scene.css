@@ -1,0 +1,118 @@
+.advanced-lab-viewport {
+  position: relative;
+  border: 1px solid #81d6ef35;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #081525;
+  box-shadow:
+    inset 0 0 90px #2b76a111,
+    0 20px 50px #0003;
+}
+.advanced-lab-canvas {
+  height: clamp(350px, 48vw, 540px);
+  width: 100%;
+}
+.advanced-lab-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.lab-scene-caption {
+  position: absolute;
+  top: 58px;
+  right: 18px;
+  left: 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  pointer-events: none;
+  align-items: center;
+}
+.lab-scene-caption strong {
+  direction: ltr;
+  letter-spacing: 2px;
+  font-size: 10px;
+  color: #a4f2ee;
+  background: #081726a8;
+  border: 1px solid #8df2fb33;
+  border-radius: 7px;
+  padding: 7px 9px;
+}
+.lab-scene-caption span {
+  font-size: 10px;
+  color: #c4d5e2;
+  text-shadow: 0 1px 5px #000;
+  background: #08172688;
+  padding: 5px 8px;
+  border-radius: 7px;
+}
+.lab-camera-buttons {
+  position: absolute;
+  bottom: 37px;
+  left: 15px;
+  display: flex;
+  gap: 7px;
+  direction: ltr;
+  flex-wrap: wrap;
+  max-width: calc(100% - 30px);
+}
+.lab-camera-buttons button {
+  background: #091d32e8;
+  border: 1px solid #73d2e044;
+  padding: 7px 11px;
+  min-width: 36px;
+  color: #d7f9ff;
+  font-size: 11px;
+}
+.lab-camera-buttons button:hover {
+  background: #1d405a;
+}
+.lab-scene-footnote {
+  position: absolute;
+  bottom: 10px;
+  right: 16px;
+  left: 16px;
+  text-align: right;
+  pointer-events: none;
+  font-size: 9px;
+  color: #abc3d1;
+  text-shadow: 0 1px 4px #000;
+}
+@media (max-width: 600px) {
+  .advanced-lab-canvas {
+    height: 390px;
+  }
+  .lab-scene-caption {
+    top: 58px;
+    right: 10px;
+    left: 10px;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .lab-scene-caption strong {
+    font-size: 8px;
+    white-space: nowrap;
+  }
+  .lab-scene-caption span {
+    font-size: 8px;
+    max-width: 180px;
+    line-height: 1.7;
+  }
+  .lab-scene-footnote {
+    font-size: 8px;
+    left: 10px;
+    right: 10px;
+  }
+  .lab-camera-buttons {
+    bottom: 48px;
+    left: 10px;
+  }
+  .lab-camera-buttons button {
+    padding: 6px 9px;
+  }
+}
+@media print {
+  .advanced-lab-viewport {
+    display: none;
+  }
+}
