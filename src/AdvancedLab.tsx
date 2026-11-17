@@ -819,7 +819,7 @@ export default function AdvancedLab({
                     ["ethyne", "إيثاين"],
                   ])}
                   {range("sampleAmount", "كمية العينة (مول افتراضي)", 0.25, 2)}
-                  {range("dose", "مكافئات Br₂ (مول افتراضي)", 0, 4)}
+                  {range("dose", "كمية Br₂ المضافة (مول افتراضي)", 0, 4)}
                 </>
               )}
               {id === "addition" && (
