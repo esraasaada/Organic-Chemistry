@@ -1,1 +1,30 @@
-{"name":"organic-chemistry-universe","version":"1.0.0","private":true,"type":"module","scripts":{"dev":"vite --host 0.0.0.0","build":"tsc -b && vite build","test":"vitest run"},"dependencies":{"lucide-react":"^0.468.0","react":"^19.0.0","react-dom":"^19.0.0","three":"^0.180.0"},"devDependencies":{"@testing-library/react":"^16.3.3","@testing-library/user-event":"^14.6.12","@types/react":"^19.0.0","@types/react-dom":"^19.0.0","@types/three":"^0.180.0","@vitejs/plugin-react":"^4.3.4","jsdom":"^31.0.1","typescript":"~5.7.2","vite":"^6.1.0","vitest":"^3.0.0"}}
+{
+  "name": "organic-chemistry-universe",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc -b && vite build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.12",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.180.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^31.0.1",
+    "typescript": "~5.7.2",
+    "vite": "^6.1.0",
+    "vitest": "^3.0.0"
+  }
+}
