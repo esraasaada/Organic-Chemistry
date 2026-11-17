@@ -1,0 +1,6 @@
+// @vitest-environment jsdom
+import React from 'react';
+import{it,expect,vi}from'vitest';
+import{render,screen,fireEvent,act,cleanup}from'@testing-library/react';
+import{App}from'./main';
+it('navigates sections, saves student and preferences, restores progress after remount',async()=>{window.scrollTo=vi.fn();localStorage.clear();location.hash='';render(<App/>);fireEvent.click(screen.getByText('ابدأ رحلتك العلمية'));fireEvent.change(screen.getByPlaceholderText('اكتب اسمك هنا'),{target:{value:'عمر الطالب'}});fireEvent.submit(screen.getByPlaceholderText('اكتب اسمك هنا').closest('form')!);expect(JSON.parse(localStorage.getItem('ocu-progress-v1')!).name).toBe('عمر الطالب');fireEvent.click(screen.getByTitle('تكبير الخط'));expect(JSON.parse(localStorage.getItem('ocu-progress-v1')!).font).toBe(true);for(const page of ['games','assessment','life','progress','lessons','lab']){await act(async()=>{location.hash=page;window.dispatchEvent(new HashChangeEvent('hashchange'));});expect(document.querySelector('main')).toBeTruthy();expect(document.querySelector('main')!.textContent).not.toContain('undefined');}cleanup();render(<App/>);expect(document.querySelector('.sidebar-bottom')!.textContent).toContain('عمر الطالب');expect(document.querySelector('.large')).toBeTruthy();cleanup();});
