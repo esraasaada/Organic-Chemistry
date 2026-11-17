@@ -1,0 +1,13 @@
+.experiments .experiment-flow {animation: experimentFlow 2.4s ease-in-out infinite alternate;}
+@keyframes experimentFlow {from {transform:translateY(12px);opacity:.45} to {transform:translateY(-10px);opacity:1}}
+@media (prefers-reduced-motion:reduce) {.experiments .experiment-flow {animation:none}}
+.reduce-motion .experiments .experiment-flow,[data-motion="false"] .experiments .experiment-flow {animation:none}
+.experiments select {min-height:44px;max-width:100%;display:block;margin-top:8px;}
+.experiments select option {background:#13213b;color:#f4f7ff;}
+.experiments button:disabled {cursor:default;opacity:.8;}
+.experiment-report {margin-top:20px;padding:16px;border:1px solid #ffffff28;border-radius:12px;}
+@media print {.experiments button,.experiments select,.experiments input {display:none!important}.experiments svg {max-height:180px}.experiment-report {break-inside:avoid}}
+.experiments .added-atom {animation:addedAtom .65s ease-out both;transform-box:fill-box;transform-origin:center;}
+@keyframes addedAtom {from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce) {.experiments .added-atom {animation:none}}
+.reduce-motion .experiments .added-atom,[data-motion="false"] .experiments .added-atom {animation:none}
